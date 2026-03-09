@@ -4,6 +4,7 @@ import logging
 import collections
 import numpy as np
 import webrtcvad
+import discord
 import discord.ext.voice_recv as voice_recv
 
 logger = logging.getLogger(__name__)
