@@ -21,6 +21,7 @@ DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
+intents.messages = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
@@ -56,6 +57,35 @@ async def respond_in_voice(vc: discord.VoiceClient, text: str, channel_id: int):
     if vc.is_playing():
         vc.stop()
     vc.play(audio_source)
+
+
+@bot.event
+async def on_message(message: discord.Message):
+    if message.author.bot:
+        return
+    content = message.content.strip()
+    if content == "후니 들어와":
+        if not message.author.voice:
+            await message.channel.send("먼저 음성 채널에 들어와줘!")
+            return
+        channel = message.author.voice.channel
+        if message.guild.voice_client:
+            await message.guild.voice_client.disconnect()
+        vc = await channel.connect(cls=voice_recv.VoiceRecvClient)
+        sink = AudioSink(
+            bot=bot,
+            vc=vc,
+            channel_id=message.channel.id,
+            respond_callback=respond_in_voice,
+        )
+        vc.listen(sink)
+        await message.channel.send("ㅇㅇ 들어왔어! 말 걸어봐")
+    elif content == "후니 나가":
+        if message.guild.voice_client:
+            await message.guild.voice_client.disconnect()
+            conversation_history.pop(message.channel.id, None)
+            await message.channel.send("ㅇㅋ 나갈게")
+    await bot.process_commands(message)
 
 
 @tree.command(name="join", description="후니를 음성 채널에 불러오기")
