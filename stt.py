@@ -1,11 +1,17 @@
+import os
 import io
 import wave
-import numpy as np
 from faster_whisper import WhisperModel
 
-# 모델 로드 (최초 1회만, small이 속도/정확도 균형 최적)
-# CPU에서도 충분히 빠름. GPU 있으면 device="cuda"
-_model = WhisperModel("small", device="cpu", compute_type="int8")
+# 모델 로드 (최초 1회만)
+# - "small"        : CPU 기본값. 속도/정확도 균형
+# - "large-v3-turbo": 2026 기준 정확도/속도 균형의 표준 (GPU 권장, ~1.5GB VRAM)
+# - "distil-large-v3.5": 장문에서 turbo보다 ~1.5배 빠름
+# GPU 있으면 WHISPER_DEVICE=cuda, WHISPER_COMPUTE=float16 권장
+_MODEL_NAME = os.environ.get("WHISPER_MODEL", "small")
+_DEVICE = os.environ.get("WHISPER_DEVICE", "cpu")
+_COMPUTE = os.environ.get("WHISPER_COMPUTE", "int8")
+_model = WhisperModel(_MODEL_NAME, device=_DEVICE, compute_type=_COMPUTE)
 
 
 def transcribe_audio(pcm_bytes: bytes, sample_rate: int = 48000) -> str:
